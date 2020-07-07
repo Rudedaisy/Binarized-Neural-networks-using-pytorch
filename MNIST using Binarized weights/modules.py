@@ -10,29 +10,35 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from argLibrary import *
 
 from functions import *
-
 
 class BinaryTanh(nn.Module):
     def __init__(self):
         super(BinaryTanh, self).__init__()
-        self.hardtanh = nn.Hardtanh()
-
+        #self.hardtanh = nn.Hardtanh()
+        # HACK - override tanh with ReLU
+        self.relu = nn.ReLU()
+        
     def forward(self, input):
-        output = self.hardtanh(input)
-        output = binarize(output)
+        #output = self.hardtanh(input)
+        output = self.relu(input)
+        if args.bin_acts:
+            output = binarize(output)
         return output
         
 
 class BinaryLinear(nn.Linear):
-
     def forward(self, input):
-        binary_weight = binarize(self.weight)
-        if self.bias is None:
-            return F.linear(input, binary_weight)
+        if args.bin_weights:
+            weight = binarize(self.weight)
         else:
-            return F.linear(input, binary_weight, self.bias)
+            weight = self.weight
+        if self.bias is None:
+            return F.linear(input, weight)
+        else:
+            return F.linear(input, weight, self.bias)
 
     def reset_parameters(self):
         # Glorot initialization
@@ -49,8 +55,11 @@ class BinaryLinear(nn.Linear):
 class BinaryConv2d(nn.Conv2d):
 
     def forward(self, input):
-        bw = binarize(self.weight)
-        return F.conv2d(input, bw, self.bias, self.stride,
+        if args.bin_weights:
+            weight = binarize(self.weight)
+        else:
+            weight = self.weight
+        return F.conv2d(input, weight, self.bias, self.stride,
                                self.padding, self.dilation, self.groups)
 
     def reset_parameters(self):

@@ -1,0 +1,6 @@
+Layer Name,	Output Channels (# filters),	Input Channels,	Height,	Width,
+conv1,		6,     		   		1,    		5,	5,
+conv2,		16,				6,		5,	5,
+fc1,		120,				784,		1,	1,
+fc2,		84,				120,		1,	1,
+fc3,		10,				84,		1,	1,
