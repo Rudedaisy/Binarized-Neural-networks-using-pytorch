@@ -65,7 +65,8 @@ def exportIFM(out, saveIFM, firstBatch, fname):
         if args.bin_acts:
             d = d.astype(int)
         else:
-            d = binary(d)
+            #d = binary(d)
+            d = d
         pd.DataFrame(d).to_csv(fname)
 
 torch.manual_seed(args.seed)
@@ -133,7 +134,8 @@ class LeNet5(nn.Module):
     def forward(self, x):
         global firstBatch
         if saveIFM and firstBatch:
-            d = binary(np.reshape(x.cpu().numpy()[0], -1, 'C'))
+            #d = binary(np.reshape(x.cpu().numpy()[0], -1, 'C'))
+            d = np.reshape(x.cpu().numpy()[0], -1, 'C')
             #print("Type of input")
             #print(type(d[0]))
             #print(np.shape(x.cpu().numpy()[0]))
@@ -267,6 +269,9 @@ def test(exportData = False):
                         else:
                             weights[weights <= 0] = -1
                         weights = weights.astype(int)
+                    # FOR EASE OF USE: convert to weights-sparsity matrix
+                    weights[math.isclose(weights, 0, 1e-6)] = 0
+                    weights[weights != 0] = 1
                     print(np.shape(weights))
                     weights = np.reshape(weights, (np.shape(weights)[0], -1),'C')
                     #print(np.shape(weights))
