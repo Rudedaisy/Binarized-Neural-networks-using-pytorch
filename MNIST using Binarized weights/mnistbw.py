@@ -20,6 +20,11 @@ from argLibrary import *
 import numpy as np
 import ctypes # allow binary representation of the FP numbers
 from decimal import Decimal # quantize number to fixed-point
+import sys
+
+# to export DNN dimensions
+sys.path.insert(1, '../../torch-summary/torchsummary')
+from torchsummary import summary
 
 # to save model weights
 import pandas as pd
@@ -263,7 +268,7 @@ def test(exportData = False):
         print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
             test_loss, correct, len(test_loader.dataset),
             100. * correct / len(test_loader.dataset)))
-
+        
         # export weight data
         if exportData:
             for name, module in model.named_modules():
@@ -299,7 +304,29 @@ for epoch in range(1, args.epochs + 1):
         exportData = True
         saveIFM = True
     test(exportData)
+
+def listToString(thisList):
+    if len(thisList) == 0:
+        return "NA"
+    string = str(thisList[0])
+    if len(thisList) > 1:
+        for item in thisList[1:]:
+            string += ("," + str(item))
+    return string
     
+    
+# export layerwise data
+modelShape = "LayerName\tLayerID\tInputShape\tOutputShape\tKernelShape\n"
+summaryobject = summary(model, (1,28,28))
+for layer in summaryobject.summary_list:
+    if ("Conv" in str(layer)) or ("Linear" in str(layer)):
+        modelShape += (str(layer) + "\t" + listToString(layer.input_size) + "\t" + listToString(layer.output_size) + "\t" + listToString(layer.kernel_size) + "\n")
+print(modelShape)
+modelShapeFile = open("ModelShape.txt",'w')
+modelShapeFile.write(modelShape)
+modelShapeFile.close()
+#print(summaryobject.summary_list.kernel_size)
+
 #print(time_graph)
 #plt.title('Training for MNIST with epoch', fontsize=20)
 #plt.ylabel('time (s)')
