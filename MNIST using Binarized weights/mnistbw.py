@@ -63,10 +63,16 @@ def exportIFM(out, saveIFM, firstBatch, fname):
         d = np.reshape(out.cpu().numpy()[0], -1, 'C')
         #print(np.shape(out.cpu().numpy()[0]))
         if args.bin_acts:
+            d[d > 1e-6] = 1
+            d[d < -1e-6] = 1
+            d[d != 1] = 0
             d = d.astype(int)
         else:
             #d = binary(d)
-            d = d
+            d[d > 1e-6] = 1
+            d[d < -1e-6] = 1
+            d[d != 1] = 0
+            d = d.astype(int)
         pd.DataFrame(d).to_csv(fname)
 
 torch.manual_seed(args.seed)
@@ -135,11 +141,12 @@ class LeNet5(nn.Module):
         global firstBatch
         if saveIFM and firstBatch:
             #d = binary(np.reshape(x.cpu().numpy()[0], -1, 'C'))
-            d = np.reshape(x.cpu().numpy()[0], -1, 'C')
+            #d = np.reshape(x.cpu().numpy()[0], -1, 'C')
             #print("Type of input")
             #print(type(d[0]))
             #print(np.shape(x.cpu().numpy()[0]))
-            pd.DataFrame(d).to_csv('data/act0.csv')
+            #pd.DataFrame(d).to_csv('data/act0.csv')
+            exportIFM(x, saveIFM, firstBatch, 'data/act0.csv')
         out = self.conv1(x)
         exportIFM(out, saveIFM, firstBatch, 'data/act1_1.csv')
         out = self.layer1_2(out)
@@ -270,8 +277,10 @@ def test(exportData = False):
                             weights[weights <= 0] = -1
                         weights = weights.astype(int)
                     # FOR EASE OF USE: convert to weights-sparsity matrix
-                    weights[math.isclose(weights, 0, 1e-6)] = 0
-                    weights[weights != 0] = 1
+                    weights[weights > 1e-6] = 1
+                    weights[weights < -1e16] = 1
+                    weights[weights != 1] = 0
+                    weights = weights.astype(int)
                     print(np.shape(weights))
                     weights = np.reshape(weights, (np.shape(weights)[0], -1),'C')
                     #print(np.shape(weights))
@@ -291,14 +300,14 @@ for epoch in range(1, args.epochs + 1):
         saveIFM = True
     test(exportData)
     
-print(time_graph)
-plt.title('Training for MNIST with epoch', fontsize=20)
-plt.ylabel('time (s)')
-plt.plot(e,time_graph,'bo')
-plt.show()
-plt.title('Accuracy With epoch', fontsize=20)
-plt.plot(e,accur,'bo')
-plt.show()
+#print(time_graph)
+#plt.title('Training for MNIST with epoch', fontsize=20)
+#plt.ylabel('time (s)')
+#plt.plot(e,time_graph,'bo')
+#plt.show()
+#plt.title('Accuracy With epoch', fontsize=20)
+#plt.plot(e,accur,'bo')
+#plt.show()
 
 
     
